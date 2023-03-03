@@ -32,6 +32,7 @@ class Background(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = 0,0
 
+#broken
 class Animation(pygame.sprite.Sprite):
   def __init__(self, spritesheet, framecount, width, height, x, y, callback_list=None):
     pygame.sprite.Sprite.__init__(self)  #call Sprite initializer
@@ -82,18 +83,27 @@ class Ball(pygame.sprite.Sprite):
       self.image.fill((255, 255, 255))
     self.rect.centerx += self.speed * math.cos(self.angle * math.pi / 180)
     self.rect.centery += self.speed * math.sin(self.angle * math.pi / 180)
+    global gamestarted
+    global lives
     if gamestarted:
       self.speed = 5
     else:
       self.speed = 0
       self.rect.centerx = pygame.mouse.get_pos()[0]
       self.rect.centery = 450
-    if self.rect.left < 0 or self.rect.right > 640:
+      self.element = paddle.element
+    if self.rect.left <= 0 or self.rect.right >= 640:
       self.angle = 180 - self.angle
       self.superconduct = False
-    if self.rect.top < 0 or self.rect.bottom > SCR_height:
+    if self.rect.top <= 0 or self.rect.bottom >= SCR_height:
       self.angle = -self.angle
       self.superconduct = False
+    if self.rect.bottom >= SCR_height:
+      if len(balls) > 1:
+        self.kill()
+      else:
+        gamestarted = False
+        lives-=1
 
 class Paddle(pygame.sprite.Sprite):
   def __init__(self):
@@ -128,6 +138,8 @@ class Brick(pygame.sprite.Sprite):
       self.image.fill((0, 255, 255))
     else:
       self.image.fill(element_color_dict[self.element])
+    if self.health <= 0:
+      self.kill()
 
   def getElement(self):
     if self.frost_timer > 0:
@@ -266,14 +278,16 @@ while keepGoing:
     brickHitList = pygame.sprite.spritecollide(ball, bricks, False)
     for brick in brickHitList:
       print('hit')
+      brick.reaction(ball.element, ball)
       if ball.superconduct:
         brick.kill()
       else:
-        if ball.rect.left < brick.rect.left or ball.rect.right > brick.rect.right:
-          ball.angle = 180 - ball.angle
+        if ball.rect.left <= brick.rect.left or ball.rect.right >= brick.rect.right:
+          if ball.angle < 3:
+            ball.angle = -ball.angle
+          else: ball.angle = 180 - ball.angle
         elif ball.rect.top < brick.rect.top or ball.rect.bottom > brick.rect.bottom:
           ball.angle = -ball.angle
-        brick.reaction(ball.element, ball)
       break
     
     
